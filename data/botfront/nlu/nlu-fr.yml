@@ -1,0 +1,31 @@
+version: "3.1"
+nlu:
+- intent: greet
+  examples: |
+    - salut
+    - bonjour
+
+- intent: goodbye
+  examples: |
+    - bye
+    - au revoir
+
+- intent: affirm
+  examples: |
+    - oui
+    - absolument
+
+- intent: deny
+  examples: |
+    - non
+    - jamais
+
+- intent: mood_great
+  examples: |
+    - super
+    - top
+
+- intent: mood_unhappy
+  examples: |
+    - bof
+    - triste

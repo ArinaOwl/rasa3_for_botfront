@@ -80,7 +80,21 @@ def run_training(args: argparse.Namespace, can_exit: bool = False) -> Optional[T
     domain = rasa.cli.utils.get_validated_path(
         args.domain, "domain", DEFAULT_DOMAIN_PATH, none_is_valid=True
     )
-    config = rasa.cli.utils.get_validated_config(args.config, CONFIG_MANDATORY_KEYS)
+
+    # botfront:start
+    if os.path.isdir(args.config):
+        from rasa.telemetry import TELEMETRY_ENABLED_ENVIRONMENT_VARIABLE
+        from pathlib import Path
+
+        os.environ[TELEMETRY_ENABLED_ENVIRONMENT_VARIABLE] = "false"
+        config = [
+            Path(args.config) / f
+            for f in os.listdir(args.config)
+            if f.startswith("config") and f.endswith(("yml", "yaml"))
+        ]
+    else:
+        config = rasa.cli.utils.get_validated_config(args.config, CONFIG_MANDATORY_KEYS) #_get_valid_config(args.config, CONFIG_MANDATORY_KEYS)
+    # botfront:end
 
     training_files = [
         rasa.cli.utils.get_validated_path(

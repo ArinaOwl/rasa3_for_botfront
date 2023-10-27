@@ -36,6 +36,18 @@ import rasa.shared.utils.validation
 DEFAULT_ENCODING = "utf-8"
 YAML_VERSION = (1, 2)
 
+# botront:start
+from functools import wraps
+def run_once(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not f.has_run:
+            result = f(*args, **kwargs)
+            f.has_run = True
+            return result
+    f.has_run = False
+    return wrapper
+#botfront:end
 
 class bcolors:
     HEADER = "\033[95m"
@@ -293,6 +305,7 @@ def json_to_string(obj: Any, **kwargs: Any) -> Text:
     return json.dumps(obj, indent=indent, ensure_ascii=ensure_ascii, **kwargs)
 
 
+@run_once   #botfront
 def fix_yaml_loader() -> None:
     """Ensure that any string read by yaml is represented as unicode."""
 
@@ -304,7 +317,7 @@ def fix_yaml_loader() -> None:
     yaml.Loader.add_constructor("tag:yaml.org,2002:str", construct_yaml_str)
     yaml.SafeLoader.add_constructor("tag:yaml.org,2002:str", construct_yaml_str)
 
-
+@run_once   #botfront
 def replace_environment_variables() -> None:
     """Enable yaml loader to process the environment variables in the yaml."""
     # eg. ${USER_NAME}, ${PASSWORD}

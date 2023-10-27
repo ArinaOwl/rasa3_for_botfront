@@ -142,3 +142,6 @@ POLICY_NAME_RULE = "RulePolicy"
 CLASSIFIER_NAME_FALLBACK = "FallbackClassifier"
 
 POLICIES_THAT_EXTRACT_ENTITIES = {"TEDPolicy"}
+
+from rasa_addons.core.action_list import action_list # botfront
+DEFAULT_ACTION_NAMES += action_list # botfront

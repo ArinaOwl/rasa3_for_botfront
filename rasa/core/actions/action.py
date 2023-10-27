@@ -198,6 +198,12 @@ def action_for_name_or_text(
 
     if action_name_or_text.startswith(UTTER_PREFIX):
         return ActionBotResponse(action_name_or_text)
+    # botfront:start
+    elif domain.forms.get(action_name_or_text, {}).get("graph_elements") is not None:
+        return generate_bf_form_action(action_name_or_text)
+    elif action_name_or_text in actions_bf:
+        return actions_bf[action_name_or_text]
+    # botfront:end
 
     is_form = action_name_or_text in domain.form_names
     # Users can override the form by defining an action with the same name as the form
@@ -1408,3 +1414,12 @@ def extract_slot_value_from_predefined_mapping(
         ]
 
     return value
+
+# botfront:start
+import sys  # avoid circular imports when testing addons
+
+if not hasattr(sys, "_called_from_rasa_addons_test"):
+    from rasa_addons.core.actions import actions_bf, generate_bf_form_action  # bf
+else:
+    actions_bf = {}
+# botfront:end

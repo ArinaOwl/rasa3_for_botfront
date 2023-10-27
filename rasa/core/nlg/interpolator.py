@@ -73,7 +73,8 @@ def interpolate(
                 interpolate(v, values)
             elif isinstance(v, list):
                 response[k] = [interpolate(i, values) for i in v]
-            elif isinstance(v, str):
+            elif (isinstance(v, str)
+                  and k != "payload"):  # botfront cheap fix: ignore payload key
                 response[k] = interpolate_text(v, values)
         return response
     elif isinstance(response, list):

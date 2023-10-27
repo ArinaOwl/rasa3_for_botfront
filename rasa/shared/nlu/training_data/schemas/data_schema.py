@@ -58,6 +58,19 @@ def rasa_nlu_data_schema() -> Dict[Text, Any]:
         },
     }
 
+    # botfront:start
+    gazette_schema = {
+        "type": "object",
+        "properties": {
+            "value": {"type": "string"},
+            "gazette": {
+                "type": "array",
+                "items": {"type": "string"},
+            }
+        }
+    }
+    # botfront:end
+
     return {
         "type": "object",
         "properties": {
@@ -78,6 +91,7 @@ def rasa_nlu_data_schema() -> Dict[Text, Any]:
                         "items": training_example_schema,
                     },
                     "lookup_tables": {"type": "array", "items": lookup_table_schema},
+                    "gazette": {"type": "array", "items": gazette_schema}, # botfront
                 },
             }
         },

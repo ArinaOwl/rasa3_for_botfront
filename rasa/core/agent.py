@@ -375,7 +375,9 @@ class Agent:
         return self.tracker_store is not None and self.processor is not None
 
     @agent_must_be_ready
-    async def parse_message(self, message_data: Text) -> Dict[Text, Any]:
+    async def parse_message(self, message_data: Text,
+                            lang: Optional[Text] = None,  # botfront
+                            ) -> Dict[Text, Any]:
         """Handles message text and intent payload input messages.
 
         The return value of this function is parsed_data.
@@ -397,7 +399,9 @@ class Agent:
                 }
 
         """
-        message = UserMessage(message_data)
+        message = UserMessage(message_data,
+                              metadata={"language": lang}  # botfront
+                              )
 
         return await self.processor.parse_message(message)  # type: ignore[union-attr]
 

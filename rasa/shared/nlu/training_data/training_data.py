@@ -45,6 +45,7 @@ class TrainingData:
         entity_synonyms: Optional[Dict[Text, Text]] = None,
         regex_features: Optional[List[Dict[Text, Text]]] = None,
         lookup_tables: Optional[List[Dict[Text, Any]]] = None,
+        gazette: Optional[List[Dict[Text, List[Text]]]] = None,   # botfront
         responses: Optional[Dict[Text, List[Dict[Text, Any]]]] = None,
     ) -> None:
 
@@ -56,6 +57,7 @@ class TrainingData:
         self.regex_features = regex_features or []
         self.sort_regex_features()
         self.lookup_tables = lookup_tables or []
+        self.gazette = gazette if gazette else []    # botfront
         self.responses = responses or {}
 
         self._fill_response_phrases()
@@ -138,6 +140,7 @@ class TrainingData:
         entity_synonyms = self.entity_synonyms.copy()
         regex_features = copy.deepcopy(self.regex_features)
         lookup_tables = copy.deepcopy(self.lookup_tables)
+        gazette = copy.deepcopy(self.gazette)   # botfront
         responses = copy.deepcopy(self.responses)
 
         for o in others:
@@ -147,6 +150,7 @@ class TrainingData:
             training_examples.extend(copy.deepcopy(o.training_examples))
             regex_features.extend(copy.deepcopy(o.regex_features))
             lookup_tables.extend(copy.deepcopy(o.lookup_tables))
+            gazette.extend(copy.deepcopy(o.gazette))     # botfront
 
             for text, syn in o.entity_synonyms.items():
                 util.check_duplicate_synonym(
@@ -157,7 +161,12 @@ class TrainingData:
             responses.update(o.responses)
 
         return TrainingData(
-            training_examples, entity_synonyms, regex_features, lookup_tables, responses
+            training_examples,
+            entity_synonyms,
+            regex_features,
+            lookup_tables,
+            gazette,       # botfront
+            responses
         )
 
     def filter_training_examples(
@@ -515,6 +524,7 @@ class TrainingData:
             entity_synonyms=self.entity_synonyms,
             regex_features=self.regex_features,
             lookup_tables=self.lookup_tables,
+            gazette=self.gazette,    # botfront
             responses=train_responses,
         )
 
@@ -523,6 +533,7 @@ class TrainingData:
             entity_synonyms=self.entity_synonyms,
             regex_features=self.regex_features,
             lookup_tables=self.lookup_tables,
+            gazette=self.gazette,    # botfront
             responses=test_responses,
         )
 

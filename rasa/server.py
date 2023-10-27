@@ -523,7 +523,8 @@ def add_root_route(app: Sanic) -> None:
     @app.get("/")
     async def hello(request: Request) -> HTTPResponse:
         """Check if the server is running and responds with the version."""
-        return response.text("Hello from Rasa: " + rasa.__version__)
+        # return response.text("Hello from Rasa: " + rasa.__version__)
+        return response.text("Hello from Rasa: " + rasa.__version_bf__)  # botfront
 
 
 def async_if_callback_url(f: Callable[..., Coroutine]) -> Callable:
@@ -694,7 +695,8 @@ def create_app(
         """Respond with the version number of the installed Rasa."""
         return response.json(
             {
-                "version": rasa.__version__,
+                # "version": rasa.__version__,
+                "version": rasa.__version_bf__,  # botfront
                 "minimum_compatible_version": MINIMUM_COMPATIBLE_VERSION,
             }
         )
@@ -1169,7 +1171,8 @@ def create_app(
 
         if not cross_validation_folds:
             test_coroutine = _evaluate_model_using_test_set(
-                request.args.get("model"), test_data
+                request.args.get("model"), test_data,
+                request.args.get("language"),  # botfront
             )
 
         try:
@@ -1185,7 +1188,8 @@ def create_app(
             )
 
     async def _evaluate_model_using_test_set(
-        model_path: Text, test_data_file: Text
+        model_path: Text, test_data_file: Text,
+            language: Text,  # botfront
     ) -> Dict:
         logger.info("Starting model evaluation using test set.")
 
@@ -1212,9 +1216,28 @@ def create_app(
                 HTTPStatus.CONFLICT, "Conflict", "Loaded model file not found."
             )
 
-        return await rasa.nlu.test.run_evaluation(
-            data_path, eval_agent.processor, disable_plotting=True, report_as_dict=True
+        # botfront:start
+        #return await rasa.nlu.test.run_evaluation(
+        #    data_path, eval_agent.processor, disable_plotting=True, report_as_dict=True
+        #)
+        evaluation = await rasa.nlu.test.run_evaluation(
+            data_path,
+            nlu_model.get(language),
+            disable_plotting=True,
+            errors=True,
+            output_directory=model_directory,
         )
+
+        for classifier in evaluation.get("entity_evaluation", {}):
+            entity_errors_file = os.path.join(
+                model_directory, f"{classifier}_errors.json"
+            )
+            if os.path.isfile(entity_errors_file):
+                entity_errors = rasa.shared.utils.io.read_json_file(entity_errors_file)
+                evaluation["entity_evaluation"][classifier]["predictions"] = entity_errors
+        return evaluation
+        # botfront:end
+
 
     async def _cross_validate(data_file: Text, config_file: Text, folds: int) -> Dict:
         logger.info(f"Starting cross-validation with {folds} folds.")
@@ -1307,7 +1330,10 @@ def create_app(
         try:
             data = emulator.normalise_request_json(request.json)
             try:
-                parsed_data = await app.ctx.agent.parse_message(data.get("text"))
+                parsed_data = await app.ctx.agent.parse_message(
+                    data.get("text"),
+                    lang=request.json.get("lang"),  # botfront
+                )
             except Exception as e:
                 logger.debug(traceback.format_exc())
                 raise ErrorResponse(
@@ -1497,10 +1523,17 @@ def _nlu_training_payload_from_json(
         domain=str(training_data),
         config=str(training_data),
         training_files=str(temp_dir),
-        output=model_output_directory,
+        output=os.environ.get("MODEL_PATH", DEFAULT_MODELS_PATH),  # botfront  #model_output_directory,
         force_training=rasa.utils.endpoints.bool_arg(request, "force_training", False),
         core_additional_arguments=_extract_core_additional_arguments(request),
         nlu_additional_arguments=_extract_nlu_additional_arguments(request),
+        # botfront:start
+        fixed_model_name=request_payload.get("fixed_model_name"),
+        persist_nlu_training_data=True,
+        #core_additional_arguments={
+        #    "augmentation_factor": int(augmentation_factor),
+        #},
+        #botrfont:end
     )
 
 
