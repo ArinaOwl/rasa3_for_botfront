@@ -126,7 +126,7 @@ def _check_unresolved_slots(domain: Domain, stories: StoryGraph) -> None:
 
 def train(
     domain: Text,
-    config: Text,
+    config: Dict[Text, Text],  # botfront   # Text,
     training_files: Optional[Union[Text, List[Text]]],
     output: Text = rasa.shared.constants.DEFAULT_MODELS_PATH,
     dry_run: bool = False,
@@ -142,7 +142,7 @@ def train(
 
     Args:
         domain: Path to the domain file.
-        config: Path to the config file.
+        config: Path to the config file. Keys are language codes
         training_files: List of paths to training data files.
         output: Output directory for the trained model.
         dry_run: If `True` then no training will be done, and the information about
@@ -162,9 +162,16 @@ def train(
     Returns:
         An instance of `TrainingResult`.
     """
-    file_importer = TrainingDataImporter.load_from_config(
-        config, domain, training_files, core_additional_arguments
-    )
+    # botfront:start
+    # file_importer = TrainingDataImporter.load_from_config(
+    #     config, domain, training_files, core_additional_arguments
+    # )
+    from rasa_addons.importers import BotfrontFileImporter
+    # from pathlib import Path
+
+    # os.mkdir(Path(train_path) / DEFAULT_CORE_SUBDIRECTORY_NAME)
+    file_importer = BotfrontFileImporter(config, domain, training_files)
+    # botfront:end
 
     stories = file_importer.get_stories()
     nlu_data = file_importer.get_nlu_data()
@@ -285,13 +292,26 @@ def _train_graph(
         with telemetry.track_model_training(
             file_importer, model_type=training_type.model_type
         ):
-            trainer.train(
-                model_configuration,
-                file_importer,
-                full_model_path,
-                force_retraining=force_full_training,
-                is_finetuning=is_finetuning,
-            )
+            # botfront:start
+            for lang in config:
+                if config[lang]:
+                    rasa.shared.utils.cli.print_color(
+                        "Start training <{}> NLU model ...".format(lang),
+                        color=rasa.shared.utils.io.bcolors.OKBLUE,
+                    )
+                    trainer.train(
+                        model_configuration,
+                        file_importer,
+                        full_model_path,
+                        force_retraining=force_full_training,
+                        is_finetuning=is_finetuning,
+                    )
+                else:
+                    rasa.shared.utils.cli.print_color(
+                        f"NLU data for language <{lang}> didn't change, skipping training...",
+                        color=rasa.shared.utils.io.bcolors.OKBLUE,
+                    )
+            # botfront:end
             rasa.shared.utils.cli.print_success(
                 f"Your Rasa model is trained and saved at '{full_model_path}'."
             )
